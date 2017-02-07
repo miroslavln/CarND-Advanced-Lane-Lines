@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import utils
+import glob
+import matplotlib.pyplot as plt
 from line import Line
 
 
@@ -90,7 +92,7 @@ class LaneFinder:
         white = self.detect_white_line(warped)
 
         combined_binary = np.zeros_like(x_sobel)
-        combined_binary[(white == 1) | (yellow == 1) | (x_sobel == 1)] = 1
+        combined_binary[(white == 1) | (yellow == 1)] = 1
 
         combined_binary = utils.gaussian_blur(combined_binary, 5)
 
@@ -135,20 +137,19 @@ class LaneFinder:
         self.right_line.process_image(warped, right_center)
 
         y = np.linspace(0, img.shape[0] - 1, img.shape[0])
-        result = self.project_on_image(img, utils.fit_line(self.left_line.current_fit, y),
-                                       utils.fit_line(self.right_line.current_fit, y), y)
+        result = self.project_on_image(img, utils.fit_line(self.left_line.best_fit, y),
+                                       utils.fit_line(self.right_line.best_fit, y), y)
 
         result = self.display_mask(result, warped)
         result = self.display_birds_eye(result)
 
         deviation = self.get_deviation_from_center(result, left_center, right_center)
 
-        l_text = "Left Curvature:  {} m".format(self.left_line.radius_of_curvature)
-        r_text = "Right Curvature:  {} m".format(self.right_line.radius_of_curvature)
+        curvature = np.round(self.left_line.radius_of_curvature + self.right_line.radius_of_curvature / 2, 2)
+        c_text = "Curvature:  {} m".format(curvature)
         dev_text = "Deviation from center: {} m".format(deviation)
-        cv2.putText(result, l_text, (50, 50), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
-        cv2.putText(result, r_text, (50, 90), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
-        cv2.putText(result, dev_text, (50, 130), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
+        cv2.putText(result, c_text, (50, 50), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
+        cv2.putText(result, dev_text, (50, 90), cv2.FONT_HERSHEY_PLAIN, 2, (255, 255, 255), 2)
 
         return result
 
@@ -165,3 +166,14 @@ class LaneFinder:
     def add_display(self, result, display, x_offset, y_offset):
         result[y_offset: y_offset + display.shape[0], x_offset: x_offset + display.shape[1]] = display
         return result
+
+
+if __name__ == "__main__":
+    images = glob.glob('./camera_cal/calibration*.jpg')
+    mtx, dist = utils.calibrate_camera(images)
+
+    img = utils.load_image('./test_images/test5.jpg')
+
+    lane_finder = LaneFinder(mtx, dist)
+    result = lane_finder.process_image(img)
+    plt.imshow(result)
