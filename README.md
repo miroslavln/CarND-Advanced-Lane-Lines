@@ -47,7 +47,7 @@ Provided the camera distortion coefficients from the previous step I used the `c
 ####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 I used a combination of color ranges and sobel gradient to detect the lane lines. I used a the `cv2.inRange()` method to detect the yellow and white pixels in the image. For the yellow detection,
 I converted the image to HSV and used the following a range (20-40, 100-255,100-255). For white color detection I used the RGB image with ranges(10-255,100-255,200-255).
-I also use a a sobel filter to get the x gradient. this can be found in `lane_finder.py` from line 63 to 97. Here's an example of my output for this step.
+This can be found in `lane_finder.py` from line 63 to 97. Here's an example of my output for this step.
 
 ![alt text][image3]
 
